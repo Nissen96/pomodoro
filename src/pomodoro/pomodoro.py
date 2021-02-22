@@ -1,13 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later (see AUTHORS file)
-from PyQt5.QtCore import Qt, QTime, QTimer, QSettings, QDir
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QTime, QTimer, QSettings
+from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
     QComboBox,
-    QFormLayout,
     QGroupBox,
     QHBoxLayout,
-    QHeaderView,
     QLabel,
     QLCDNumber,
     QMainWindow,
@@ -105,8 +103,8 @@ class MainWindow(QMainWindow):
         self.tasksTableWidget.cellDoubleClicked.connect(self.markTaskAsFinished)
 
     def setupUi(self):
-        self.size_policy = sizePolicy = QSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Expanding
+        self.size_policy = QSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
         """ Create tabwidget """
         self.tabWidget = QTabWidget()
@@ -259,9 +257,9 @@ class MainWindow(QMainWindow):
         self.tasksTableWidget.horizontalHeader().setStretchLastSection(True)
         self.tasksTableWidget.verticalHeader().setVisible(False)
         self.tasksTableWidget.setWordWrap(True)
-        self.tasksTableWidget.setTextElideMode(Qt.ElideNone)
-        self.tasksTableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.tasksTableWidget.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.tasksTableWidget.setTextElideMode(Qt.TextElideMode.ElideNone)
+        self.tasksTableWidget.setEditTriggers(QAbstractItemView.EditTriggers.NoEditTriggers)
+        self.tasksTableWidget.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.insertTasks(*settings.value(tasksKey, []))
         """ Add widgets to container widgets """
         self.inputButtonContainerLayout.addWidget(self.acceptTaskButton)
@@ -317,6 +315,7 @@ class MainWindow(QMainWindow):
         self.quitAction.triggered.connect(self.exit)
         self.trayIcon.activated.connect(self.onActivate)
         self.trayIcon.show()
+        self.trayIcon.setToolTip("Pomodoro")
 
     def leaveEvent(self, event):
         super(MainWindow, self).leaveEvent(event)
@@ -432,6 +431,8 @@ class MainWindow(QMainWindow):
             self.showWindowMessage(
                 Status.workFinished if started else Status.repetitionsReached
             )
+            if not started:
+                self.resetButton.click()
         elif self.currentMode is Mode.rest and self.time >= self.restEndTime:
             self.resetTimer()
             self.modeComboBox.setCurrentIndex(0)
@@ -440,6 +441,9 @@ class MainWindow(QMainWindow):
             self.showWindowMessage(
                 Status.restFinished if started else Status.repetitionsReached
             )
+            if not started:
+                self.resetButton.click()
+
 
     def incrementCurrentRepetitions(self):
         if self.maxRepetitions > 0:
@@ -479,18 +483,12 @@ class MainWindow(QMainWindow):
 
     def showWindowMessage(self, status):
         if status is Status.workFinished:
-            self.trayIcon.showMessage(
-                "Break", choice(work_finished_phrases), makeIcon("tomato")
-            )
+            title, text = "Break", choice(work_finished_phrases)
         elif status is Status.restFinished:
-            self.trayIcon.showMessage(
-                "Work", choice(rest_finished_phrases), makeIcon("tomato")
-            )
+            title, text = "Work", choice(rest_finished_phrases)
         else:
-            self.trayIcon.showMessage(
-                "Finished", choice(pomodoro_finished_phrases), makeIcon("tomato")
-            )
-            self.resetButton.click()
+            title, text = "Finished", choice(work_finished_phrases)
+        self.trayIcon.showMessage(title, text, makeIcon("tomato"))
 
     def makeButton(self, text, iconName=None, disabled=True):
         button = QPushButton(text, sizePolicy=self.size_policy)
@@ -506,15 +504,10 @@ class MainWindow(QMainWindow):
             app.quit()
 
     def onActivate(self, reason):
-        if reason == QSystemTrayIcon.Trigger:
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
             self.show()
 
 def makeApp():
-    try:
-        from PyQt5.QtWinExtras import QtWin
-        QtWin.setCurrentProcessExplicitAppUserModelID(APP_ID)
-    except:
-        pass
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
     app.setWindowIcon(makeIcon("tomato"))
@@ -526,5 +519,5 @@ def makeApp():
 def main():
     app = makeApp()
     app.setStyleSheet(load_stylesheet(qt_api="pyqt5"))
-    mainWindow = MainWindow()
-    sys.exit(app.exec_())
+    MainWindow()
+    sys.exit(app.exec())
