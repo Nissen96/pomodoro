@@ -1,3 +1,4 @@
 PyQt6>=6.0.1
 setuptools>=49.2.1
 QDarkStyle>=2.8.1
+win10toast>=0.9

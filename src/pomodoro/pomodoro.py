@@ -27,6 +27,7 @@ from random import choice
 from .const import *
 from .util import makeIcon
 from qdarkstyle import load_stylesheet
+from win10toast import ToastNotifier
 import sys
 
 
@@ -316,6 +317,7 @@ class MainWindow(QMainWindow):
         self.trayIcon.activated.connect(self.onActivate)
         self.trayIcon.show()
         self.trayIcon.setToolTip("Pomodoro")
+        self.toast = ToastNotifier()
 
     def leaveEvent(self, event):
         super(MainWindow, self).leaveEvent(event)
@@ -489,6 +491,7 @@ class MainWindow(QMainWindow):
         else:
             title, text = "Finished", choice(work_finished_phrases)
         self.trayIcon.showMessage(title, text, makeIcon("tomato"))
+        self.toast.show_toast(title, text, icon_path="pomodoro/data/icons/tomato.ico", duration=10, threaded=True)
 
     def makeButton(self, text, iconName=None, disabled=True):
         button = QPushButton(text, sizePolicy=self.size_policy)
